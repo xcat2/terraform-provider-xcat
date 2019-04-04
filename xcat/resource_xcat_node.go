@@ -40,7 +40,6 @@ func resourceNode() *schema.Resource {
 			"device_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "server",
 				ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
 					s := v.(string)
 					validvalues := []string{"switch", "pdu", "rack", "hmc", "server"}
@@ -59,7 +58,6 @@ func resourceNode() *schema.Resource {
 						"arch": {
 							Type:     schema.TypeString,
 							Required: true,
-							Default:  "x86_64",
 							ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
 								s := v.(string)
 								validvalues := []string{"ppc64", "ppc64el", "ppc64le", "x86_64", "armv7l", "armel"}
@@ -76,7 +74,6 @@ func resourceNode() *schema.Resource {
 			"role": {
 				Type:     schema.TypeString,
 				Required: true,
-				Default:  "compute",
 				ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
 					s := v.(string)
 					validvalues := []string{"compute", "service"}
@@ -100,7 +97,6 @@ func resourceNode() *schema.Resource {
 									"engine_type": {
 										Type:     schema.TypeString,
 										Required: true,
-										Default:  "grub2",
 										ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
 											s := v.(string)
 											validvalues := []string{"pxe", "xnba", "grub2", "yaboot", "petitboot", "onie"}

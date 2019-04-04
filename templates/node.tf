@@ -1,8 +1,7 @@
 resource "xcat_node" "cn1" {
-  name         = "cn1"
   obj_info {
      groups = "all"
-     comments = "node for test" 
+     #comments = "node for test" 
   }
 
   device_type = "server"
