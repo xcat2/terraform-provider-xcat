@@ -1,4 +1,5 @@
 resource "xcat_node" "cn1" {
+
   obj_info {
      groups = "all"
      #comments = "node for test" 

@@ -2,12 +2,14 @@ package xcat
 
 import (
 	"fmt"
-	//"log"
+	"log"
 	"strings"
 	"sync"
+        "os"
 
 	//"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
+        "github.com/jeremywohl/flatten"
 )
 
 var systemSyncLock sync.Mutex
@@ -20,6 +22,11 @@ func resourceNode() *schema.Resource {
 		Delete: resourceNodeDelete,
 
 		Schema: map[string]*schema.Schema{
+                        "name": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
 			"obj_info": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -123,8 +130,7 @@ func resourceNode() *schema.Resource {
 						},
 						"hardware_mgt_engine": {
 							Type:     schema.TypeSet,
-							Optional: true,
-							Default:  "ipmi",
+							Required: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"engine_type": {
@@ -199,7 +205,25 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 	systemSyncLock.Lock()
 	defer systemSyncLock.Unlock()
 
+        flat, err := flatten.Flatten(d.meta, "", flatten.DotStyle)
 	//config := meta.(*Config)
+        fileName:= "/tmp/log_debug.log"
+        logFile,err := os.OpenFile(fileName,os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
+        if err != nil {
+           log.Fatalln("open file error!")
+        }
+        defer logFile.Close()
+        debugLog := log.New(logFile,"[Debug]",log.Llongfile)
+        debugLog.SetFlags(debugLog.Flags() | log.LstdFlags)
+
+        debugLog.Printf("+%v\n",flat)
+        debugLog.Printf("+%s\n","checking whether the resource %s exists",d.Id())
+
+
+
+        debugLog.SetPrefix("[Info]")
+
+        log.Printf("[INFO] there is a pending resize operation on this pool...")
 
 	return resourceNodeRead(d, meta)
 }
@@ -207,6 +231,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
 	//config := meta.(*Config)
 
+        log.Printf("[INFO] there is a pending resize operation on this pool...")
 	return nil
 }
 
@@ -215,6 +240,7 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 	defer systemSyncLock.Unlock()
 
 	//config := meta.(*Config)
+        log.Printf("[DEBUG] XXXXXXXXXXXXXXXX@@@@@@@@@@@@@@@@@@@@@@@@@@@...")
 
 	return resourceNodeRead(d, meta)
 }
