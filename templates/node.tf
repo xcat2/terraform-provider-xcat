@@ -1,8 +1,9 @@
-resource "xcat_node" "cn1" {
+resource "xcat_node" "node1" {
 
+  name = "test1"
   obj_info {
      groups = "all"
-     #comments = "node for test" 
+     description = "node for test" 
   }
 
   device_type = "server"
@@ -10,7 +11,7 @@ resource "xcat_node" "cn1" {
      arch = "ppc64le"
   }
 
-  role = "compute"
+  #role = "compute"
 
   engines {
      netboot_engine {
