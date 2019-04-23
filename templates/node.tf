@@ -1,41 +1,14 @@
 resource "xcat_node" "node1" {
-
-  name = "test1"
-  obj_info {
-     groups = "all"
-     description = "node for test" 
-  }
-
-  device_type = "server"
-  device_info {
-     arch = "ppc64le"
-  }
-
-  #role = "compute"
-
-  engines {
-     netboot_engine {
-        engine_type = "grub2"
-        engine_info {
-           osimage = "osimage1"
-        }
-     }
-     hardware_mgt_engine {
-        engine_type = "openbmc"
-        engine_info {
-           bmc = "bmc1"
-           bmcusername = "USERID"
-           bmcpassword = "PASSW0RD"
-        }
-     }
-  }
-
-  network_info {
-     primarynic {
-        ip = "10.3.5.102"
-        mac="aa:bb:cc:dd:ee:ff"
-     }
-  }
+  #name="mid08tor03cn01"
+  name="c910f03c05k27"
+  
+  machinetype = "server"
+  arch = "ppc64le"
+  disksize="200G"
+  memory="200G"
+  cpucount="4"
+  
+  osimage="rhels8.0-ppc64le-netboot-compute"
 
 }
 

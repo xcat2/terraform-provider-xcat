@@ -14,10 +14,7 @@ import (
         "github.com/jeremywohl/flatten"
         
 	"github.com/hashicorp/terraform/helper/hashcode"
-	//"github.com/hashicorp/terraform/helper/resource"
-	//"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
-        //"github.com/jeremywohl/flatten"
 )
 
 var systemSyncLock sync.Mutex
@@ -35,179 +32,101 @@ func resourceNode() *schema.Resource {
                                   Optional: true,
                                   Computed: true,
                         },
-			"obj_info": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"groups": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"description": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
-                                //Set: resourceHash,
-			},
-
-			"device_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
-					s := v.(string)
-					validvalues := []string{"switch", "pdu", "rack", "hmc", "server"}
-					if !Contains(validvalues, s) {
-						errs = append(errs, fmt.Errorf("%s: the valid values: %s", name, strings.Join(validvalues, ",")))
-					}
-					return
-				},
-			},
-
-			"device_info": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"arch": {
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
-								s := v.(string)
-								validvalues := []string{"ppc64", "ppc64el", "ppc64le", "x86_64", "armv7l", "armel"}
-								if !Contains(validvalues, s) {
-									errs = append(errs, fmt.Errorf("%s: the valid values: %s", name, strings.Join(validvalues, ",")))
-								}
-								return
-							},
-						},
-					},
-				},
-			},
-
-			"role": {
-				Type:     schema.TypeString,
-				Required: false,
-                                Computed: true,
-                                /*
-				ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
-					s := v.(string)
-					validvalues := []string{"compute", "service"}
-					if !Contains(validvalues, s) {
-						errs = append(errs, fmt.Errorf("%s: the valid values: %s", name, strings.Join(validvalues, ",")))
-					}
-					return
-				},*/
-			},
-
-			"engines": {
-				Type:     schema.TypeSet,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"netboot_engine": {
-							Type:     schema.TypeSet,
-							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"engine_type": {
-										Type:     schema.TypeString,
-										Required: true,
-										ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
-											s := v.(string)
-											validvalues := []string{"pxe", "xnba", "grub2", "yaboot", "petitboot", "onie"}
-											if !Contains(validvalues, s) {
-												errs = append(errs, fmt.Errorf("%s: the valid values: %s", name, strings.Join(validvalues, ",")))
-											}
-											return
-										},
-									},
-									"engine_info": {
-										Type:     schema.TypeSet,
-										Required: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"osimage": {
-													Type:     schema.TypeString,
-													Optional: true,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						"hardware_mgt_engine": {
-							Type:     schema.TypeSet,
-							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"engine_type": {
-										Type:     schema.TypeString,
-										Required: true,
-										ValidateFunc: func(v interface{}, name string) (warn []string, errs []error) {
-											s := v.(string)
-											validvalues := []string{"openbmc", "ipmi", "hmc", "fsp", "kvm", "mp", "bpa", "ivm", "blade", "pdu", "switch"}
-											if !Contains(validvalues, s) {
-												errs = append(errs, fmt.Errorf("%s: the valid values: %s", name, strings.Join(validvalues, ",")))
-											}
-											return
-										},
-									},
-									"engine_info": {
-										Type:     schema.TypeSet,
-										Optional: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"bmc": {
-													Type:     schema.TypeString,
-													Required: true,
-												},
-												"bmcusername": {
-													Type:     schema.TypeString,
-													Required: true,
-												},
-												"bmcpassword": {
-													Type:     schema.TypeString,
-													Required: true,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-
-			"network_info": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"primarynic": {
-							Type:     schema.TypeSet,
-							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"ip": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"mac": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+                        "machinetype": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "arch": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "disksize": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "memory": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "cputype": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "cpucount": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "serial": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "gpu": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "ib": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "firmware": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "ip": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "mac": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "rack": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "unit": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "room": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "height": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "osimage": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "powerstatus": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "zone": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
 		},
 	}
 }
@@ -242,13 +161,14 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
         }
         */
         node:=d.Get("name").(string)
-
+     
+        /*
         retcode,retv:=getattr("engines.netboot_engine.engine_type", d)
         debugLog.Printf("%s xxxxxxx\n",retv)
         if retcode !=0{
            return fmt.Errorf("failed to get key %s","engines.netboot_engine.engine_type")
         }
-         
+        */
 
 
         nodegroups,errcode,errmessage := getnodegroups(node) 
@@ -269,7 +189,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
         //debugLog.Printf("engines=%s\n",d.Get("engines").Get("netboot_engine").Get("engine_type").(string)) 
         //debugLog.Printf("engines=%s\n",d.Get("engines").([]interface{}).Get("netboot_engine").([]interface{}).Get("engine_type").([]interface{}).(string)) 
  
-
+        d.SetId(node)
         debugLog.SetPrefix("[Info]")
 
         log.Printf("[INFO] there is a pending resize operation on this pool...")
@@ -312,13 +232,22 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
         err = json.Unmarshal([]byte(nodejson), &nodemap)
         debugLog.Printf("%v",nodemap)
 
+        /*
         keys := reflect.ValueOf(nodemap["node"]).MapKeys()[0]
         debugLog.Printf("%v",keys)
         nodename:=keys.String()
-      
-        flattened,err:=flatten.Flatten(nodemap["node"].(map[string]interface{})[nodename].(map[string]interface{}),"",flatten.DotStyle) 
-        debugLog.Printf("%v",flattened)
+        */  
+    
+        flattened,err:=flatten.Flatten(nodemap["node"].(map[string]interface{})[node].(map[string]interface{}),"",flatten.DotStyle) 
+        log.Printf("%v",flattened)
  
+
+        NodeInv2Res(flattened, d)
+
+        /*
+        if val,ok := flattened["device_info.mtm"];ok{
+             d.Set("machinetype",val)
+        }
         p_obj_info:=&schema.Set{F:resourceHash}
 
         obj_info := map[string]interface{}{}
@@ -339,6 +268,7 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
         debugLog.Printf("XXXXXXXXXX%v\n",d) 
         
         //nodename:=nodemap["node"] 
+        */
 
 	return nil
 }
@@ -495,4 +425,41 @@ func resourceHash(v interface{}) int {
         }
 	return hashcode.String(mapstr)
 }
+
+
+
+var DictRes2Inv = map[string]string{
+    "machinetype" : "device_info.mtm",
+    "arch": "device_info.arch",
+    "disksize":"device_info.disksize",
+    "memory":"device_info.memory",
+    "cputype":"device_info.cputype",
+    "cpucount":"device_info.cpucount",
+    "serial":"device_info.serial",
+    "ip":"network_info.primarynic.ip",
+    "mac":"network_info.primarynic.mac",
+    "rack":"position_info.rack",
+    "unit":"position_info.unit",
+    "room":"position_info.room",
+    "height":"position_info.height",
+    "osimage":"netboot.osimage",
+    "zone":"security_info.zonename",
+}
+
+func NodeInv2Res(inv map[string]interface{}, d *schema.ResourceData) int {
+    keys := reflect.ValueOf(DictRes2Inv).MapKeys()
+    //log.Printf("%v",inv)
+    for _, kres := range keys {
+        kinv:=DictRes2Inv[kres.String()]
+      //  log.Printf("=====%s==%s===",kres.String(),kinv)
+        if val,ok := inv[kinv];ok{
+        //     log.Printf("%s=========%s",kres.String(),val)
+             d.Set(kres.String(),val)
+        } else {
+             d.Set(kres.String(),"")
+        }
+    }
+    return 0
+}
+
 
