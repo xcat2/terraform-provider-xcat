@@ -1,6 +1,6 @@
 resource "xcat_node" "node1" {
-  #name="mid08tor03cn01"
-  name="c910f03c05k27"
+  name="mid08tor03cn01"
+  #name="c910f03c05k27"
   
   machinetype = "server"
   arch = "ppc64le"
@@ -13,3 +13,8 @@ resource "xcat_node" "node1" {
 }
 
   
+resource "xcat_node" "newnode" {
+  #name="mid08tor03cn01"
+  name="node000${count.index}"
+  count=5
+}
