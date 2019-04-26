@@ -5,15 +5,16 @@ import (
 	"log"
 	"strings"
 	"sync"
-        "os"
+        //"os"
         "os/exec"
         "bytes"
         "regexp"
-        "encoding/json"
+        //"encoding/json"
         "reflect"
-        "github.com/jeremywohl/flatten"
+        //"github.com/jeremywohl/flatten"
+        "github.com/thedevsaddam/gojsonq"
         
-	"github.com/hashicorp/terraform/helper/hashcode"
+	//"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -27,12 +28,19 @@ func resourceNode() *schema.Resource {
 		Delete: resourceNodeDelete,
 
 		Schema: map[string]*schema.Schema{
+                        "selectors": {
+                                  Type:     schema.TypeMap,
+                                  Optional: true,
+                                  Computed: false,
+                                  forcenew: true
+                        },
                         "name": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
+                                  forcenew: true
                         },
-                        "machinetype": {
+                        "mtm": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
@@ -88,9 +96,10 @@ func resourceNode() *schema.Resource {
                                   Computed: true,
                         },
                         "mac": {
-                                  Type:     schema.TypeString,
+                                  Type:     schema.TypeList,
                                   Optional: true,
                                   Computed: true,
+                                  Elem:     &schema.Schema{Type: schema.TypeString},
                         },
                         "rack": {
                                   Type:     schema.TypeString,
@@ -135,141 +144,45 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 	systemSyncLock.Lock()
 	defer systemSyncLock.Unlock()
 
-        //flat, err := flatten.Flatten(d, "", flatten.DotStyle)
 	config := meta.(*Config)
-        fileName:= "/tmp/log_debug.log"
-        logFile,err := os.OpenFile(fileName,os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
-        if err != nil {
-           log.Fatalln("open file error!")
+        selectors:=Intf2Map(d.Get("selectors"))
+        log.Printf("----------------%v",selectors)
+
+        nodename:=d.Get("name")
+        if nodename != nil && nodename != ""{
+            selectors["name"]=nodename.(string)
         }
-        defer logFile.Close()
-        debugLog := log.New(logFile,"[Debug]",log.Llongfile)
-        debugLog.SetFlags(debugLog.Flags() | log.LstdFlags)
-
-        //debugLog.Printf("+%v\n",flat)
-        debugLog.Printf("checking whether the resource '%s' exists \n",d.Get("name"))
-
-        /*
-        debugLog.Printf("type =%s\n",typeof(d.Get("engines")))
-        vRaw:=d.Get("engines")
-        componentRaw := vRaw.(*schema.Set).List()
-        debugLog.Printf("xxxxxxxxx%d VVVvv",len(componentRaw))
-        for i, raw := range componentRaw {
-            rawMap := raw.(map[string]interface{})
-            debugLog.Printf("type =%d,%s\n",i,typeof(rawMap["netboot_engine"]))
-            
-        }
-        */
-        node:=d.Get("name").(string)
-     
-        /*
-        retcode,retv:=getattr("engines.netboot_engine.engine_type", d)
-        debugLog.Printf("%s xxxxxxx\n",retv)
-        if retcode !=0{
-           return fmt.Errorf("failed to get key %s","engines.netboot_engine.engine_type")
-        }
-        */
-
-
-        nodegroups,errcode,errmessage := getnodegroups(node) 
-        if errcode!=0 {
-            return fmt.Errorf(errmessage )
-        }
-
-        debugLog.Printf("nodegroups=%s\n",nodegroups)              
 
         username:=config.Username
-        debugLog.Printf("username=%s\n",username ) 
-        errcode,errmessage= occupynode(node, username)
+        errcode,out:= occupynode(selectors, username)
         if errcode!=0 {
-            return fmt.Errorf(errmessage )
+            return fmt.Errorf(out)
         }
+        
 
         
-        //debugLog.Printf("engines=%s\n",d.Get("engines").Get("netboot_engine").Get("engine_type").(string)) 
-        //debugLog.Printf("engines=%s\n",d.Get("engines").([]interface{}).Get("netboot_engine").([]interface{}).Get("engine_type").([]interface{}).(string)) 
- 
+
+        node:=out
         d.SetId(node)
-        debugLog.SetPrefix("[Info]")
-
+        d.Set("name",node)
         log.Printf("[INFO] there is a pending resize operation on this pool...")
-
 	return resourceNodeRead(d, meta)
 }
 
 func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
-	//config := meta.(*Config)
-        fileName:= "/tmp/log_debug.log"
-        logFile,err := os.OpenFile(fileName,os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
-        if err != nil {
-           log.Fatalln("open file error!")
-        }
-        defer logFile.Close()
-        debugLog := log.New(logFile,"[Debug]",log.Llongfile)
-        debugLog.SetFlags(debugLog.Flags() | log.LstdFlags)
-
-
-
         node:=d.Get("name").(string)
         cmd := exec.Command("xcat-inventory","export","-t","node","-o",node,"--format","json")
         var outbuf, errbuf bytes.Buffer
         cmd.Stdout = &outbuf
         cmd.Stderr = &errbuf
             
-        err = cmd.Run()        
-
+        err := cmd.Run()        
         if err != nil {
-               debugLog.Printf("Failed to read node resource "+node+" from xcat: "+errbuf.String())
+               log.Printf("Failed to read node resource "+node+" from xcat: "+errbuf.String())
         }
 
-
-        debugLog.Printf(outbuf.String())        
-        debugLog.Printf(errbuf.String())        
-
-        nodejson :=outbuf.String()
-         
-        nodemap := make(map[string]interface{})
-        err = json.Unmarshal([]byte(nodejson), &nodemap)
-        debugLog.Printf("%v",nodemap)
-
-        /*
-        keys := reflect.ValueOf(nodemap["node"]).MapKeys()[0]
-        debugLog.Printf("%v",keys)
-        nodename:=keys.String()
-        */  
-    
-        flattened,err:=flatten.Flatten(nodemap["node"].(map[string]interface{})[node].(map[string]interface{}),"",flatten.DotStyle) 
-        log.Printf("%v",flattened)
- 
-
-        NodeInv2Res(flattened, d)
-
-        /*
-        if val,ok := flattened["device_info.mtm"];ok{
-             d.Set("machinetype",val)
-        }
-        p_obj_info:=&schema.Set{F:resourceHash}
-
-        obj_info := map[string]interface{}{}
-
-        if val,ok := flattened["obj_info.groups"];ok{
-            obj_info["groups"]=val
-        }
-
-        if val,ok := flattened["obj_info.description"];ok{
-            obj_info["description"]=val
-        }
-        debugLog.Printf("XXXXXXXXXX\n") 
-        p_obj_info.Add(obj_info)
-        debugLog.Printf("YYYYYYYYYYY\n") 
-        //d.Set("obj_info", p_obj_info)
-        d.Set("role","XXXXXXXXXX")
-
-        debugLog.Printf("XXXXXXXXXX%v\n",d) 
-        
-        //nodename:=nodemap["node"] 
-        */
-
+        mynodejson :=gojsonq.New().JSONString(outbuf.String())
+        NodeInv2Res(mynodejson, d,node)
 	return nil
 }
 
@@ -285,24 +198,84 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceNodeDelete(d *schema.ResourceData, meta interface{}) error {
 
-        fileName:= "/tmp/log_debug.log"
-        logFile,err := os.OpenFile(fileName,os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
-        if err != nil {
-           log.Fatalln("open file error!")
-        }
-        defer logFile.Close()
-        debugLog := log.New(logFile,"[Debug]",log.Llongfile)
-        debugLog.SetFlags(debugLog.Flags() | log.LstdFlags)
-
 	config := meta.(*Config)
         username:=config.Username
         node:=d.Get("name").(string)
-        debugLog.Printf("in resourceNodeDelete\n")
         errorcode,errormessage := releasenode(node,username)
         if errorcode!=0 {
             return fmt.Errorf(errormessage )
         }
 	return nil
+}
+
+
+func selectnodes(selector map[string]string) ([]string) {
+        var cmdslice []string
+        log.Printf("selector=%v",selector)
+        if node,ok:=selector["name"]; ok{
+            nodegroups,errcode,_:=getnodegroups(node)
+            if errcode !=0 {
+                return nil
+            }
+            
+            if nodegroups != "free" {
+                return nil
+            } 
+            cmdslice=[]string{"lsdef", "-t", "node",node, "-s"}
+            delete(selector,"name")
+        } else {
+            cmdslice=[]string{"lsdef", "-t", "node","free", "-s"}
+        }
+        log.Printf("selector=%v",selector)
+        for key,value :=range selector {
+             cmdslice = append(cmdslice,"-w",Res2DefAttr(key)+"=="+value)
+        }
+        log.Printf("cmdslice=%v",cmdslice)
+        cmd := exec.Command(cmdslice[0],cmdslice[1:]...)
+        var outbuf, errbuf bytes.Buffer
+        cmd.Stdout = &outbuf
+        cmd.Stderr = &errbuf
+
+        err := cmd.Run()        
+        if err != nil {
+               return nil
+        }
+       
+        cmdout:=outbuf.String()
+        log.Printf("%v",cmdout)
+        
+        var nodelist []string
+        nodelist=nil
+
+        if cmdout != "" {
+           var rgx=regexp.MustCompile(`\s*(\b[^(]\S+[^)]\b)\s+\(node\)`) 
+           rs := rgx.FindAllStringSubmatch(cmdout,-1)
+           log.Printf("rs=%v\n",rs)
+           for _,mylist := range rs {
+               log.Printf("VVVVVVVV %v",mylist)
+               nodelist=append(nodelist,mylist[1])
+           }
+        }
+        return nodelist
+}
+
+func occupynode(selectors map[string]string, user string) (int,string) {
+     nodelist:=selectnodes(selectors)
+     if nodelist ==nil {
+         return 1, "cannot find requested  node resources"
+     }
+
+
+     cmd := exec.Command("chdef","-t","node","-o",nodelist[0],"groups="+user)
+     var outbuf, errbuf bytes.Buffer
+     cmd.Stdout = &outbuf
+     cmd.Stderr = &errbuf
+         
+     err := cmd.Run()        
+     if err != nil {
+            return 1,"Failed to occupy node resource "+nodelist[0]+" for user "+user +": "+errbuf.String()
+     }
+     return 0,nodelist[0]
 }
 
 
@@ -329,40 +302,6 @@ func getnodegroups(node string) (string,int,string) {
         return nodegroups,0,""
 }
 
-func occupynode(node string, user string) (int,string) {
-     nodegroups,errcode,errmsg:=getnodegroups(node)
-     if errcode !=0 {
-         return errcode,errmsg
-     }
-
-     nodegrouplist:=strings.Split(nodegroups,",")
-     if Contains(nodegrouplist, user) {
-         return 0,""
-     }
-
-
-     if user != "root" {
-         for _,v := range nodegrouplist {
-             if v!="root"{
-                 return 1, "node resource "+node+" has already been occupier by user "+user
-             }
-         }
-     }
-
-     cmd := exec.Command("chdef","-t","node","-o",node,"-p","groups="+user)
-     var outbuf, errbuf bytes.Buffer
-     cmd.Stdout = &outbuf
-     cmd.Stderr = &errbuf
-         
-     err := cmd.Run()        
-     if err != nil {
-            return 1,"Failed to occupy node resource "+node+" for user "+user +": "+errbuf.String()
-     }
-     return 0,""
-}
-
-
-
 func releasenode(node string,user string)(int,string){
      nodegroups,errcode,errmsg:=getnodegroups(node)
      if errcode !=0 {
@@ -374,7 +313,7 @@ func releasenode(node string,user string)(int,string){
          return 0,""
      }
 
-     cmd := exec.Command("chdef","-t","node","-o",node,"-m","groups="+user)
+     cmd := exec.Command("chdef","-t","node","-o",node,"groups=free")
      var outbuf, errbuf bytes.Buffer
      cmd.Stdout = &outbuf
      cmd.Stderr = &errbuf
@@ -416,20 +355,19 @@ func getattr(key string, d *schema.ResourceData) (int,string) {
 }
 
 
-func resourceHash(v interface{}) int {
+func Intf2Map(v interface{}) map[string]string {
 	m := v.(map[string]interface{})
-        
-        mapstr:=""
+        retmap:=make(map[string]string)
         for key,value :=range m{
-            mapstr=mapstr+","+key+":"+value.(string)
+            retmap[key]=value.(string)
         }
-	return hashcode.String(mapstr)
+	return retmap
 }
 
 
 
 var DictRes2Inv = map[string]string{
-    "machinetype" : "device_info.mtm",
+    "mtm" : "device_info.mtm",
     "arch": "device_info.arch",
     "disksize":"device_info.disksize",
     "memory":"device_info.memory",
@@ -442,21 +380,27 @@ var DictRes2Inv = map[string]string{
     "unit":"position_info.unit",
     "room":"position_info.room",
     "height":"position_info.height",
-    "osimage":"netboot.osimage",
+    "osimage":"engines.netboot_engine.engine_info.osimage",
     "zone":"security_info.zonename",
 }
 
-func NodeInv2Res(inv map[string]interface{}, d *schema.ResourceData) int {
+
+func Res2DefAttr(resattr string) string{
+    if resattr == "machinetype" {
+        return "mtm"
+    }
+    return resattr
+}
+
+func NodeInv2Res(myjson *gojsonq.JSONQ, d *schema.ResourceData,node string) int {
     keys := reflect.ValueOf(DictRes2Inv).MapKeys()
-    //log.Printf("%v",inv)
     for _, kres := range keys {
         kinv:=DictRes2Inv[kres.String()]
-      //  log.Printf("=====%s==%s===",kres.String(),kinv)
-        if val,ok := inv[kinv];ok{
-        //     log.Printf("%s=========%s",kres.String(),val)
-             d.Set(kres.String(),val)
+        val:=myjson.Reset().From("node."+node).Find(kinv)
+        if val != nil {
+           d.Set(kres.String(),val)
         } else {
-             d.Set(kres.String(),"")
+           d.Set(kres.String(),nil)
         }
     }
     return 0
