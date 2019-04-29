@@ -3,7 +3,7 @@ resource "xcat_node" "devnode" {
     cpucount="128"
     machinetype = "8335-GTC"
   }
-  count=5
+  count=4
   osimage="rhels8.0-ppc64le-netboot-compute"
 }
 
@@ -12,7 +12,7 @@ resource "xcat_node" "fvtnode" {
     cpucount="128"
     machinetype = "8335-GTC"
   }
-  count=6
+  count=7
   osimage="rhels8.0-ppc64le-netboot-compute"
 }
 /*

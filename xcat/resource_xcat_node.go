@@ -32,13 +32,13 @@ func resourceNode() *schema.Resource {
                                   Type:     schema.TypeMap,
                                   Optional: true,
                                   Computed: false,
-                                  forcenew: true
+                                  ForceNew: true,
                         },
                         "name": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
-                                  forcenew: true
+                                  ForceNew: true,
                         },
                         "mtm": {
                                   Type:     schema.TypeString,
@@ -159,10 +159,25 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
             return fmt.Errorf(out)
         }
         
-
         
 
         node:=out
+
+        osimage:=d.Get("osimage")
+        if osimage!=nil && osimage!= ""{
+            netbootparam:=NetbootParam{
+                osimage:osimage.(string),
+            } 
+
+            errcode,errmsg:=ProvisionNode(node,&netbootparam)
+            if errcode!=0 {
+                log.Printf("releasenode %s from %s",node,username)
+                releasenode(node,username)
+                out:="Failed to provision node "+node+":"+errmsg
+                return fmt.Errorf(out)
+            }
+        }
+ 
         d.SetId(node)
         d.Set("name",node)
         log.Printf("[INFO] there is a pending resize operation on this pool...")
@@ -407,3 +422,33 @@ func NodeInv2Res(myjson *gojsonq.JSONQ, d *schema.ResourceData,node string) int 
 }
 
 
+
+func RunCmd(cmdstr string,args ...string) (error,string,string) {
+     cmd := exec.Command(cmdstr,args...)
+     var outbuf, errbuf bytes.Buffer
+     cmd.Stdout = &outbuf
+     cmd.Stderr = &errbuf
+     err := cmd.Run()        
+     return err,outbuf.String(),errbuf.String()
+}
+
+type NetbootParam struct {
+     osimage string
+     addkcmdline string
+}
+func ProvisionNode(node string, param *NetbootParam) (int,string) {
+     err,outstr,errstr:=RunCmd("makedns",node)
+     err,outstr,errstr=RunCmd("rinstall",node,"osimage="+param.osimage)
+     if err!=nil{
+         return 1,errstr
+     }    
+
+     var myregex = regexp.MustCompile("status=booted")
+     for {
+         err,outstr,errstr=RunCmd("lsdef","-t","node","-o",node,"-i","status")
+         if myregex.MatchString(outstr) { 
+             return 0,""
+         }
+     }
+     return 1,""
+}
