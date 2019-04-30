@@ -163,7 +163,6 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 
         node:=out
 
-        /*
         osimage:=d.Get("osimage")
         if osimage!=nil && osimage!= ""{
             netbootparam:=NetbootParam{
@@ -178,7 +177,6 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
                 return fmt.Errorf(out)
             }
         }
-        */
  
         d.SetId(node)
         d.Set("name",node)
@@ -216,15 +214,13 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
             newOsimage:=newOsimage_v.(string)
             log.Printf("%s=========%s",oldOsimage,newOsimage)
             osimage:=newOsimage
-            if osimage!=nil && osimage!= ""{
+            if osimage!= ""{
                 netbootparam:=NetbootParam{
-                    osimage:osimage.(string),
+                    osimage:osimage,
                 } 
 
                 errcode,errmsg:=ProvisionNode(node,&netbootparam)
                 if errcode!=0 {
-                    log.Printf("releasenode %s from %s",node,username)
-                    releasenode(node,username)
                     out:="Failed to provision node "+node+":"+errmsg
                     return fmt.Errorf(out)
                 }

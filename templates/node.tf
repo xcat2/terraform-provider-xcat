@@ -1,19 +1,21 @@
 resource "xcat_node" "devnode" {
   selectors {
-    cpucount="128"
-    machinetype = "8335-GTC"
+    //cpucount="128"
+    //machinetype = "8335-GTC"
+    arch="ppc64le"
   }
-  count=4
-  osimage="rhels8.0-ppc64le-netboot-compute"
+  count=1
+  osimage="rhels7.4-ppc64le-netboot-compute"
 }
 
 resource "xcat_node" "fvtnode" {
   selectors {
-    cpucount="128"
-    machinetype = "8335-GTC"
+    //cpucount="128"
+    //machinetype = "8335-GTC"
+    arch="ppc64le"
   }
-  count=7
-  osimage="rhels8.0-ppc64le-netboot-compute"
+  count=3
+  osimage="rhels7.4-ppc64le-netboot-compute"
   //osimage="rhels8.1-ppc64le-netboot-compute"
 }
 /*
