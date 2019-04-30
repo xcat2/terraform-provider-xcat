@@ -14,6 +14,7 @@ resource "xcat_node" "fvtnode" {
   }
   count=7
   osimage="rhels8.0-ppc64le-netboot-compute"
+  //osimage="rhels8.1-ppc64le-netboot-compute"
 }
 /*
 resource "xcat_node" "node1" {

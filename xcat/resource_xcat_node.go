@@ -163,6 +163,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 
         node:=out
 
+        /*
         osimage:=d.Get("osimage")
         if osimage!=nil && osimage!= ""{
             netbootparam:=NetbootParam{
@@ -177,6 +178,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
                 return fmt.Errorf(out)
             }
         }
+        */
  
         d.SetId(node)
         d.Set("name",node)
@@ -206,7 +208,28 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 	defer systemSyncLock.Unlock()
 
 	//config := meta.(*Config)
-        log.Printf("[DEBUG] XXXXXXXXXXXXXXXX@@@@@@@@@@@@@@@@@@@@@@@@@@@...")
+        node:=d.Get("name").(string)
+
+        if d.HasChange("osimage") {
+            oldOsimage_v, newOsimage_v := d.GetChange("osimage")
+            oldOsimage:=oldOsimage_v.(string)
+            newOsimage:=newOsimage_v.(string)
+            log.Printf("%s=========%s",oldOsimage,newOsimage)
+            osimage:=newOsimage
+            if osimage!=nil && osimage!= ""{
+                netbootparam:=NetbootParam{
+                    osimage:osimage.(string),
+                } 
+
+                errcode,errmsg:=ProvisionNode(node,&netbootparam)
+                if errcode!=0 {
+                    log.Printf("releasenode %s from %s",node,username)
+                    releasenode(node,username)
+                    out:="Failed to provision node "+node+":"+errmsg
+                    return fmt.Errorf(out)
+                }
+            }
+        }
 
 	return resourceNodeRead(d, meta)
 }
