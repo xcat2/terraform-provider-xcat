@@ -2,21 +2,23 @@ resource "xcat_node" "devnode" {
   selectors {
     //cpucount="128"
     //machinetype = "8335-GTC"
-    arch="ppc64le"
+    arch="x86_64"
+    vmcpus=1
   }
-  count=1
-  osimage="rhels7.4-ppc64le-netboot-compute"
+  count=2
+  osimage="rhels7.4-x86_64-netboot-compute"
 }
 
 resource "xcat_node" "fvtnode" {
   selectors {
     //cpucount="128"
     //machinetype = "8335-GTC"
-    arch="ppc64le"
+    arch="x86_64"
+    vmcpus=1
   }
   count=3
-  osimage="rhels7.4-ppc64le-netboot-compute"
-  //osimage="rhels8.1-ppc64le-netboot-compute"
+  osimage="rhels7.4-x86_64-netboot-compute"
+  //osimage="rhels8.1-x86_64-netboot-compute"
 }
 /*
 resource "xcat_node" "node1" {
@@ -36,3 +38,8 @@ output "fvtnodes" {
       "${xcat_node.fvtnode.*.name}"
   ]
 }
+
+output "login_credential" {
+  value="username: root; password: cluster"
+}
+

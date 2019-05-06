@@ -141,8 +141,8 @@ func resourceNode() *schema.Resource {
 }
 
 func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
-	systemSyncLock.Lock()
-	defer systemSyncLock.Unlock()
+	//systemSyncLock.Lock()
+	//defer systemSyncLock.Unlock()
 
 	config := meta.(*Config)
         selectors:=Intf2Map(d.Get("selectors"))
@@ -154,10 +154,13 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
         }
 
         username:=config.Username
+	systemSyncLock.Lock()
         errcode,out:= occupynode(selectors, username)
+	systemSyncLock.Unlock()
         if errcode!=0 {
             return fmt.Errorf(out)
         }
+
         
         
 
@@ -202,8 +205,8 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
-	systemSyncLock.Lock()
-	defer systemSyncLock.Unlock()
+	//systemSyncLock.Lock()
+	//defer systemSyncLock.Unlock()
 
 	//config := meta.(*Config)
         node:=d.Get("name").(string)
