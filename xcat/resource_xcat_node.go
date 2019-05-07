@@ -265,7 +265,11 @@ func selectnodes(selector map[string]string) ([]string) {
         }
         log.Printf("selector=%v",selector)
         for key,value :=range selector {
-             cmdslice = append(cmdslice,"-w",Res2DefAttr(key)+"=="+value)
+             if _, ok := DictRes2Inv[key]; ok { 
+                 cmdslice = append(cmdslice,"-w",Res2DefAttr(key)+"=="+value)
+             } else {
+                 cmdslice = append(cmdslice,"-w","usercomment=~,"+Res2DefAttr(key)+"="+value+",")
+             }
         }
         log.Printf("cmdslice=%v",cmdslice)
         cmd := exec.Command(cmdslice[0],cmdslice[1:]...)
@@ -279,7 +283,7 @@ func selectnodes(selector map[string]string) ([]string) {
         }
        
         cmdout:=outbuf.String()
-        log.Printf("%v",cmdout)
+        log.Printf("cmdout=%v",cmdout)
         
         var nodelist []string
         nodelist=nil

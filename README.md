@@ -1,63 +1,90 @@
-Terraform Provider
+xCAT Terraform Provider
 ==================
-
-- Website: https://www.terraform.io
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
-
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+-	[Terraform](https://www.terraform.io/downloads.html) v0.11.13
 
-Building The Provider
----------------------
+Installation
+------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-cobbler`
+## Download and install Terraform on xCAT MN
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-cobbler
+$ wget https://media.github.ibm.com/releases/207181/files/158261?token=AABUypPM6uPxEY5_rpIYtJiFjzxopYNWks5c0Tt7wA%3D%3D -O /usr/bin/terraform
+$ chmod +x /usr/bin/terraform
 ```
 
-Enter the provider directory and build the provider
+## Download and install xCAT Terraform Provider on xCAT MN
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-cobbler
-$ make build
+$ wget https://media.github.ibm.com/releases/207181/files/158263?token=AABUyukEerLIW1PPyBj1yrwUdVNf1AxFks5c0TwdwA%3D%3D -O ~/.terraform.d/plugins/terraform-provider-xcat
+$ chmod +x ~/.terraform.d/plugins/terraform-provider-xcat 
 ```
 
-Using the provider
-----------------------
-## Fill in for each provider
-
-Developing the Provider
----------------------------
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
-
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+Creat node resource pool on xCAT MN
+------------------------------------
 
 ```sh
-$ make bin
-...
-$ $GOPATH/bin/terraform-provider-cobbler
-...
+$ chdef <xCAT nodes to be added into the pool> groups=free usercomment=","
 ```
 
-In order to test the provider, you can simply run `make test`.
+Label the nodes in the resource pool on xCAT MN
+-----------------------------------------------
+
+Label the nodes with IB
 
 ```sh
-$ make test
+$ chdef <xCAT nodes with IB> usercomment=",ib=1,"
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
+Label the nodes with GPU
 
 ```sh
-$ make testacc
+$ chdef <xCAT nodes with IB> usercomment=",gpu=1,"
+```
+
+Create Terraform working directory
+----------------------------------
+
+```sh
+$ mkdir -p ~/mycluster/
+$ cd ~/mycluster/
+$ terraform init
+```
+
+Compose the cluster TF files
+----------------------------
+
+An example cluster TF files can be found in https://github.ibm.com/yangsbj/terraform-provider-xcat/tree/v0.1/templates/devcluster. Modify the TF files according to your need
+
+Refer https://www.terraform.io/docs/configuration/index.html for the Terraform HCL syntax
+
+Resource operation
+------------------
+**plan:
+
+```sh
+$ cd ~/mycluster/
+$ terraform plan
+```
+ 
+**resource apply:
+
+```sh
+$ terraform apply
+```
+
+resource update:
+
+modify the tf file and run
+```sh
+$ terraform apply
+```
+
+resource release:
+
+```sh
+$ terraform destroy
 ```
