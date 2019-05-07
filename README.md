@@ -63,27 +63,27 @@ Refer https://www.terraform.io/docs/configuration/index.html for the Terraform H
 
 Resource operation
 ------------------
-**plan:
+1. plan:
 
 ```sh
 $ cd ~/mycluster/
 $ terraform plan
 ```
  
-**resource apply:
+2. resource apply:
 
 ```sh
 $ terraform apply
 ```
 
-resource update:
+3. resource update:
 
 modify the tf file and run
 ```sh
 $ terraform apply
 ```
 
-resource release:
+4. resource release:
 
 ```sh
 $ terraform destroy
