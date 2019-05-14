@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 	"sync"
+        "time"
         //"os"
         "os/exec"
         "bytes"
@@ -16,6 +17,8 @@ import (
         
 	//"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform/helper/resource"
 )
 
 var systemSyncLock sync.Mutex
@@ -29,18 +32,42 @@ func resourceNode() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
                         "selectors": {
-                                  Type:     schema.TypeMap,
+                                  Type:     schema.TypeList,
+                                  Elem:     &schema.Schema{Type: schema.TypeString},
                                   Optional: true,
                                   Computed: false,
                                   ForceNew: true,
+                                  /*
+                                  ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+                                                    v := val.([]string)
+                                                    re:=regexp.MustCompile(`([^=!~><]+)([=!~><]{1,2})([^=!~><]+)`) 
+                                                    ValidSelectors:=make([]string,0,len(SelectorOpMaps))
+                                                    for k,_:=range SelectorOpMaps{
+                                                        ValidSelectors=append(ValidSelectors,k)
+                                                    }
+                                                    for _,line:=range v {
+                                                         match:=re.FindAllStringSubmatch(line, -1)
+                                                         if match != nil {
+                                                             attr,op,_:=match[0][1],match[0][2],match[0][3] 
+                                                             if availops,ok:=SelectorOpMaps[attr]; ok{
+                                                                 if !Contains(availops, op) {
+                                                                     errs = append(errs,fmt.Errorf("invalid operation in selector \"%s\": the valid operation for selector \"%s\": %s",line,attr,availops))
+                                                                 }
+                                                             } else {
+                                                                     errs = append(errs,fmt.Errorf("invalid selector \"%s\": the valid selectors \"%s\"",line,strings.Join(ValidSelectors,",")))
+                                                             } 
+                                                         } 
+                                                    }
+                                                    return
+                                                  },
+                                                  */
                         },
                         "name": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
-                                  ForceNew: true,
                         },
-                        "mtm": {
+                        "machinetype": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
@@ -70,22 +97,12 @@ func resourceNode() *schema.Resource {
                                   Optional: true,
                                   Computed: true,
                         },
-                        "serial": {
-                                  Type:     schema.TypeString,
-                                  Optional: true,
-                                  Computed: true,
-                        },
                         "gpu": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
                         },
                         "ib": {
-                                  Type:     schema.TypeString,
-                                  Optional: true,
-                                  Computed: true,
-                        },
-                        "firmware": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
@@ -130,15 +147,53 @@ func resourceNode() *schema.Resource {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
+                                  ValidateFunc: validation.StringInSlice([]string{"on","off"},true),
                         },
-                        "zone": {
+                        "sshusername": {
+                                  Type:     schema.TypeString,
+                                  Optional: true,
+                                  Computed: true,
+                        },
+                        "sshpassword": {
                                   Type:     schema.TypeString,
                                   Optional: true,
                                   Computed: true,
                         },
 		},
+                SchemaVersion: 0,
+                //MigrateState: resourceExampleInstanceMigrateState,
+                Timeouts: &schema.ResourceTimeout{
+                    Create: schema.DefaultTimeout(45 * time.Minute),
+                },
 	}
 }
+
+/*
+func resourceExampleInstanceMigrateState(v int, inst *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
+    switch v {
+    case 0:
+        log.Println("[INFO] Found Example Instance State v0; migrating to v1")
+        return migrateExampleInstanceStateV0toV1(inst)
+    default:
+        return inst, fmt.Errorf("Unexpected schema version: %d", v)
+    }
+}
+
+func migrateExampleInstanceStateV0toV1(inst *terraform.InstanceState) (*terraform.InstanceState, error) {
+    if inst.Empty() {
+        log.Println("[DEBUG] Empty InstanceState; nothing to migrate.")
+        return inst, nil
+    }
+
+    if !strings.HasSuffix(inst.Attributes["name"], ".") {
+        log.Printf("[DEBUG] Attributes before migration: %#v", inst.Attributes)
+        inst.Attributes["name"] = inst.Attributes["name"] + "."
+        log.Printf("[DEBUG] Attributes after migration: %#v", inst.Attributes)
+    }
+
+    return inst, nil
+}
+*/
 
 func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 	//systemSyncLock.Lock()
@@ -161,9 +216,6 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
             return fmt.Errorf(out)
         }
 
-        
-        
-
         node:=out
 
         osimage:=d.Get("osimage")
@@ -171,7 +223,8 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
             netbootparam:=NetbootParam{
                 osimage:osimage.(string),
             } 
-
+             
+            /*
             errcode,errmsg:=ProvisionNode(node,&netbootparam)
             if errcode!=0 {
                 log.Printf("releasenode %s from %s",node,username)
@@ -179,11 +232,34 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
                 out:="Failed to provision node "+node+":"+errmsg
                 return fmt.Errorf(out)
             }
-        }
+            */
+
  
+            errcode,errmsg:=Rinstall(node,&netbootparam)
+            if errcode!=0 {
+                log.Printf("releasenode %s from %s",node,username)
+                releasenode(node,username)
+                out:="Failed to provision node "+node+":"+errmsg
+                return fmt.Errorf(out)
+            }
+
+            resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+                errcode,out := GetStatus(node)
+
+                if errcode != 0 {
+                    return resource.NonRetryableError(fmt.Errorf("Error to get status of node %s: %s",node, out))
+                }
+
+                if out != "booted" {
+                    return resource.RetryableError(fmt.Errorf("Expected instance to be \"booted\" but was in state %s", out))
+                }
+
+                return resource.NonRetryableError(fmt.Errorf("the status of instance %s is booted",node))
+            })
+        }
+  
         d.SetId(node)
-        d.Set("name",node)
-        log.Printf("[INFO] there is a pending resize operation on this pool...")
+        d.Set("name",node)      
 	return resourceNodeRead(d, meta)
 }
 
@@ -205,9 +281,6 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
-	//systemSyncLock.Lock()
-	//defer systemSyncLock.Unlock()
-
 	//config := meta.(*Config)
         node:=d.Get("name").(string)
 
@@ -397,6 +470,21 @@ func getattr(key string, d *schema.ResourceData) (int,string) {
 
 
 func Intf2Map(v interface{}) map[string]string {
+	m := v.([]interface{})
+        retmap:=make(map[string]string)
+        re:=regexp.MustCompile(`([^=!~><]+)([=!~><]{1,2})([^=!~><]+)`)
+        for _,line :=range m{
+            match:=re.FindAllStringSubmatch(line.(string), -1)
+            if match != nil {
+                attr,_,value:=match[0][1],match[0][2],match[0][3]
+                retmap[attr]=value
+            }
+            
+        }
+	return retmap
+}
+/*
+func Intf2Map(v interface{}) map[string]string {
 	m := v.(map[string]interface{})
         retmap:=make(map[string]string)
         for key,value :=range m{
@@ -404,17 +492,30 @@ func Intf2Map(v interface{}) map[string]string {
         }
 	return retmap
 }
+*/
 
-
+var SelectorOpMaps = map[string][]string{
+     "disksize":[]string{"=",">",">=","<","<="},
+     "memory": []string{"=",">",">=","<","<="},
+     "cpucount": []string{"=",">",">=","<","<="},
+     "cputype": []string{"=","!=","!~","=~"},
+     "machinetype": []string{"="},
+     "name": []string{"="},
+     "rack": []string{"="},
+     "unit": []string{"="},
+     "room": []string{"="},
+     "arch": []string{"="},
+     "gpu": []string{"="},
+     "ib": []string{"="},
+    }
 
 var DictRes2Inv = map[string]string{
-    "mtm" : "device_info.mtm",
+    "machinetype" : "device_info.mtm",
     "arch": "device_info.arch",
     "disksize":"device_info.disksize",
     "memory":"device_info.memory",
     "cputype":"device_info.cputype",
     "cpucount":"device_info.cpucount",
-    "serial":"device_info.serial",
     "ip":"network_info.primarynic.ip",
     "mac":"network_info.primarynic.mac",
     "rack":"position_info.rack",
@@ -422,7 +523,6 @@ var DictRes2Inv = map[string]string{
     "room":"position_info.room",
     "height":"position_info.height",
     "osimage":"engines.netboot_engine.engine_info.osimage",
-    "zone":"security_info.zonename",
 }
 
 
@@ -462,6 +562,31 @@ type NetbootParam struct {
      osimage string
      addkcmdline string
 }
+
+func Rinstall(node string, param *NetbootParam) (int,string) {
+     err,_,errstr:=RunCmd("makedns",node)
+     err,_,errstr=RunCmd("rinstall",node,"osimage="+param.osimage)
+     if err!=nil{
+         return 1,errstr
+     }    
+     return 0,""
+}
+
+func GetStatus(node string) (int,string) {
+     err,outstr,errstr:=RunCmd("lsdef","-t","node","-o",node,"-i","status")
+     if err!=nil{
+         return 1,errstr
+     }
+
+     var myregex = regexp.MustCompile(`status=(\w+)`)
+     match:=myregex.FindAllStringSubmatch(outstr,1)
+     if match == nil {
+         return 1,"invalid output: "+outstr
+     }
+
+     return 0,match[0][1]
+}
+
 func ProvisionNode(node string, param *NetbootParam) (int,string) {
      err,outstr,errstr:=RunCmd("makedns",node)
      err,outstr,errstr=RunCmd("rinstall",node,"osimage="+param.osimage)
