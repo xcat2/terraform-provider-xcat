@@ -1,7 +1,7 @@
 package xcat
 
 import (
-	"fmt"
+	//"fmt"
 	"os"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -14,22 +14,29 @@ func Provider() terraform.ResourceProvider {
 			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "xcat service URL",
+				Description: "url of xcat restapi service endpoint",
 				DefaultFunc: envDefaultFunc("XCAT_SERVER_URL"),
 			},
 
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The username for accessing xcat server.",
+				Description: "The username",
 				DefaultFunc: envDefaultFunc("XCAT_USERNAME"),
 			},
 
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The password for accessing xcat server.",
+				Description: "The password",
 				DefaultFunc: envDefaultFunc("XCAT_PASSWORD"),
+			},
+
+			"token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The token granted by xcat restapi service for the user",
+				Default:     "",
 			},
 		},
 
@@ -48,7 +55,6 @@ func Provider() terraform.ResourceProvider {
 }
 
 func configureProvider(d *schema.ResourceData) (interface{}, error) {
-	fmt.Printf("configureProvider!!!!!!!")
 	config := Config{
 		Url:      d.Get("url").(string),
 		Username: d.Get("username").(string),
