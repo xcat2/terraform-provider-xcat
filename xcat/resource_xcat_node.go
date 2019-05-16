@@ -163,7 +163,7 @@ func resourceNode() *schema.Resource {
                 SchemaVersion: 0,
                 //MigrateState: resourceExampleInstanceMigrateState,
                 Timeouts: &schema.ResourceTimeout{
-                    Create: schema.DefaultTimeout(45 * time.Minute),
+                    Create: schema.DefaultTimeout(1 * time.Minute),
                 },
 	}
 }
@@ -219,6 +219,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
         node:=out
 
         osimage:=d.Get("osimage")
+        provisioned:=0
         if osimage!=nil && osimage!= ""{
             netbootparam:=NetbootParam{
                 osimage:osimage.(string),
@@ -243,21 +244,48 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
                 return fmt.Errorf(out)
             }
 
-            resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+
+            log.Printf("%v",resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
                 errcode,out := GetStatus(node)
 
                 if errcode != 0 {
+                    log.Printf("Error to get status of node %s: %s",node, out)
                     return resource.NonRetryableError(fmt.Errorf("Error to get status of node %s: %s",node, out))
                 }
 
                 if out != "booted" {
+                    log.Printf("Expected instance to be \"booted\" but was in state %s", out)
                     return resource.RetryableError(fmt.Errorf("Expected instance to be \"booted\" but was in state %s", out))
                 }
 
-                return resource.NonRetryableError(fmt.Errorf("the status of instance %s is booted",node))
-            })
+                provisioned=1
+                log.Printf("instance %s provisioned!",node)
+                return resource.NonRetryableError(fmt.Errorf("instance %s provisioned!",node))
+            }))
+
+            if provisioned==0 {
+                 releasenode(node,username)
+                 return fmt.Errorf("node instance %s provision timeout!",node)
+            }
         }
   
+
+       
+        powerstatus:=d.Get("powerstatus")
+        if powerstatus == "off" {
+            errcode,out :=Power(node,"off")            
+            if errcode!=0{
+               releasenode(node,username)
+               return fmt.Errorf("Fail to set powerstatus of instance  %s to %s: %s!",node,"off",out) 
+            }
+        } else if powerstatus == "on" {
+            errcode,out :=Power(node,"on")
+            if errcode!=0{
+               releasenode(node,username)
+               return fmt.Errorf("Fail to set powerstatus of instance  %s to %s: %s!",node,"on",out) 
+            }
+        }
+
         d.SetId(node)
         d.Set("name",node)      
 	return resourceNodeRead(d, meta)
@@ -284,6 +312,7 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 	//config := meta.(*Config)
         node:=d.Get("name").(string)
 
+        d.Partial(true)
         if d.HasChange("osimage") {
             oldOsimage_v, newOsimage_v := d.GetChange("osimage")
             oldOsimage:=oldOsimage_v.(string)
@@ -295,12 +324,51 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
                     osimage:osimage,
                 } 
 
-                errcode,errmsg:=ProvisionNode(node,&netbootparam)
-                if errcode!=0 {
-                    out:="Failed to provision node "+node+":"+errmsg
-                    return fmt.Errorf(out)
-                }
+            errcode,errmsg:=Rinstall(node,&netbootparam)
+            if errcode!=0 {
+                out:="Failed to provision node "+node+":"+errmsg
+                return fmt.Errorf(out)
             }
+
+            provisioned:=0
+
+            log.Printf("%v",resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+                errcode,out := GetStatus(node)
+
+                if errcode != 0 {
+                    log.Printf("Error to get status of node %s: %s",node, out)
+                    return resource.NonRetryableError(fmt.Errorf("Error to get status of node %s: %s",node, out))
+                }
+
+                if out != "booted" {
+                    log.Printf("Expected instance to be \"booted\" but was in state %s", out)
+                    return resource.RetryableError(fmt.Errorf("Expected instance to be \"booted\" but was in state %s", out))
+                }
+
+                provisioned=1
+                log.Printf("instance %s provisioned!",node)
+                return resource.NonRetryableError(fmt.Errorf("instance %s provisioned!",node))
+            }))
+
+            if provisioned==0 {
+                 return fmt.Errorf("node instance %s provision timeout!",node)
+            }
+            d.SetPartial("address")
+          }
+        }
+
+
+        if d.HasChange("powerstatus") {
+            //oldPowerStatus_v, newPowerStatus_v := d.GetChange("powerstatus")
+            _, newPowerStatus_v := d.GetChange("powerstatus")
+            //oldPowerStatus:=oldPowerStatus_v.(string)
+            newPowerStatus:=newPowerStatus_v.(string)
+            
+            errcode,out :=Power(node,newPowerStatus)            
+            if errcode!=0{
+               return fmt.Errorf("Fail to set powerstatus of instance  %s to %s: %s!",node,newPowerStatus,out) 
+            }
+            d.SetPartial("powerstatus")
         }
 
 	return resourceNodeRead(d, meta)
@@ -563,6 +631,16 @@ type NetbootParam struct {
      addkcmdline string
 }
 
+
+
+func Power(node string, action string) (int,string) {
+     err,_,errstr:=RunCmd("rpower",node,action)
+     if err!=nil{
+         return 1,errstr
+     }    
+     return 0,""
+}
+
 func Rinstall(node string, param *NetbootParam) (int,string) {
      err,_,errstr:=RunCmd("makedns",node)
      err,_,errstr=RunCmd("rinstall",node,"osimage="+param.osimage)
@@ -586,6 +664,8 @@ func GetStatus(node string) (int,string) {
 
      return 0,match[0][1]
 }
+
+
 
 func ProvisionNode(node string, param *NetbootParam) (int,string) {
      err,outstr,errstr:=RunCmd("makedns",node)
