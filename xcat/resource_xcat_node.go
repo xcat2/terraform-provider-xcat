@@ -163,7 +163,7 @@ func resourceNode() *schema.Resource {
                 SchemaVersion: 0,
                 //MigrateState: resourceExampleInstanceMigrateState,
                 Timeouts: &schema.ResourceTimeout{
-                    Create: schema.DefaultTimeout(1 * time.Minute),
+                    Create: schema.DefaultTimeout(5 * time.Minute),
                 },
 	}
 }
@@ -196,9 +196,6 @@ func migrateExampleInstanceStateV0toV1(inst *terraform.InstanceState) (*terrafor
 */
 
 func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
-	//systemSyncLock.Lock()
-	//defer systemSyncLock.Unlock()
-
 	config := meta.(*Config)
         selectors:=Intf2Map(d.Get("selectors"))
         log.Printf("----------------%v",selectors)
@@ -225,16 +222,6 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
                 osimage:osimage.(string),
             } 
              
-            /*
-            errcode,errmsg:=ProvisionNode(node,&netbootparam)
-            if errcode!=0 {
-                log.Printf("releasenode %s from %s",node,username)
-                releasenode(node,username)
-                out:="Failed to provision node "+node+":"+errmsg
-                return fmt.Errorf(out)
-            }
-            */
-
  
             errcode,errmsg:=Rinstall(node,&netbootparam)
             if errcode!=0 {
@@ -324,36 +311,36 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
                     osimage:osimage,
                 } 
 
-            errcode,errmsg:=Rinstall(node,&netbootparam)
-            if errcode!=0 {
-                out:="Failed to provision node "+node+":"+errmsg
-                return fmt.Errorf(out)
-            }
-
-            provisioned:=0
-
-            log.Printf("%v",resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-                errcode,out := GetStatus(node)
-
-                if errcode != 0 {
-                    log.Printf("Error to get status of node %s: %s",node, out)
-                    return resource.NonRetryableError(fmt.Errorf("Error to get status of node %s: %s",node, out))
+                errcode,errmsg:=Rinstall(node,&netbootparam)
+                if errcode!=0 {
+                    out:="Failed to provision node "+node+":"+errmsg
+                    return fmt.Errorf(out)
                 }
 
-                if out != "booted" {
-                    log.Printf("Expected instance to be \"booted\" but was in state %s", out)
-                    return resource.RetryableError(fmt.Errorf("Expected instance to be \"booted\" but was in state %s", out))
+                provisioned:=0
+
+                log.Printf("%v",resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+                    errcode,out := GetStatus(node)
+
+                    if errcode != 0 {
+                        log.Printf("Error to get status of node %s: %s",node, out)
+                        return resource.NonRetryableError(fmt.Errorf("Error to get status of node %s: %s",node, out))
+                    }
+
+                    if out != "booted" {
+                        log.Printf("Expected instance to be \"booted\" but was in state %s", out)
+                        return resource.RetryableError(fmt.Errorf("Expected instance to be \"booted\" but was in state %s", out))
+                    }
+
+                    provisioned=1
+                    log.Printf("instance %s provisioned!",node)
+                    return resource.NonRetryableError(fmt.Errorf("instance %s provisioned!",node))
+                }))
+
+                if provisioned==0 {
+                     return fmt.Errorf("node instance %s provision timeout!",node)
                 }
-
-                provisioned=1
-                log.Printf("instance %s provisioned!",node)
-                return resource.NonRetryableError(fmt.Errorf("instance %s provisioned!",node))
-            }))
-
-            if provisioned==0 {
-                 return fmt.Errorf("node instance %s provision timeout!",node)
-            }
-            d.SetPartial("address")
+                d.SetPartial("osimage")
           }
         }
 
@@ -371,6 +358,7 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
             d.SetPartial("powerstatus")
         }
 
+        d.Partial(false)
 	return resourceNodeRead(d, meta)
 }
 

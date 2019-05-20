@@ -3,8 +3,7 @@ resource "xcat_node" "x86node" {
     arch="x86_64"
   }
   count=3
-  mtm="abc"
-  osimage="rhels7.4-x86_64-netboot-compute"
+  osimage="rhels7.3-x86_64-netboot-compute"
 }
 
 resource "xcat_node" "ppc64lenode" {
