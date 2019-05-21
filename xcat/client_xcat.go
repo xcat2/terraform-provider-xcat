@@ -10,6 +10,9 @@ import (
 	"crypto/tls"
 )
 
+// If there is error
+//	check whether match known string, if yes return error code 1 and error string
+// 	or return response code and message
 func FormatResponse(resp interface{}, err error) (interface{}, int, string) {
 	if err != nil {
 		errorcode_str := fmt.Sprintf("%s", err)	
@@ -40,6 +43,7 @@ func FormatResponse(resp interface{}, err error) (interface{}, int, string) {
 	}
 }
 
+// return HttpClient with timeout and tls parameters
 func GenerateClient(baseUrl string, timeout time.Duration) *HttpClient {
 	httpClient := http.Client{Timeout: time.Second * timeout}
 	if strings.Contains(baseUrl, "https://") {
@@ -58,11 +62,14 @@ func Login(baseUrl string, username string, password string) (string, int, strin
 	data := make(map[string]interface{})
         data["username"] = username
 	data["password"] = password
-	ret, errcode, errmsg := FormatResponse(client.Post(url, nil, nil, data, false))
+	ret, errcode, errmsg := FormatResponse(client.Post(url, nil, nil, data, true))
 	if errcode != 0 {
 		return "", errcode, errmsg
 	}	
 	token := gjson.Get(ret.(string), "token.id")
+	if !token.Exists() {
+		return "", 1, "No token id get from xCAT"
+	}
 	return token.String(), errcode, errmsg
 }
 
@@ -85,11 +92,14 @@ func ApplyNodes(baseUrl string, token interface{}, nodeattrs interface{}) (strin
 func ListNodeStatus(node string, baseUrl string, token interface{}) (string, int, string) {
 	url := baseUrl + "/system/nodes/" + node + "/_status"
 	client := GenerateClient(baseUrl, 10)
-	ret, errcode, errmsg := FormatResponse(client.Get(url, nil, token, nil, false))
+	ret, errcode, errmsg := FormatResponse(client.Get(url, nil, token, nil, true))
 	if errcode != 0 {
 		return "", errcode, errmsg
 	}
 	status := gjson.Get(ret.(string), "status.boot.state")
+	if !status.Exists() {
+                return "", 1, "No status (boot statue) get from xCAT"
+        }
 	return status.String(), 0, ""
 }
 
