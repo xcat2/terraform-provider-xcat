@@ -13,7 +13,7 @@ import (
         //"encoding/json"
         "reflect"
         //"github.com/jeremywohl/flatten"
-        "github.com/thedevsaddam/gojsonq"
+        "github.com/tidwall/gjson"
         
 	//"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -290,8 +290,7 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
                log.Printf("Failed to read node resource "+node+" from xcat: "+errbuf.String())
         }
 
-        mynodejson :=gojsonq.New().JSONString(outbuf.String())
-        NodeInv2Res(mynodejson, d,node)
+        NodeInv2Res(outbuf.String(), d,node)
 	return nil
 }
 
@@ -589,12 +588,12 @@ func Res2DefAttr(resattr string) string{
     return resattr
 }
 
-func NodeInv2Res(myjson *gojsonq.JSONQ, d *schema.ResourceData,node string) int {
+func NodeInv2Res(myjson string, d *schema.ResourceData,node string) int {
     keys := reflect.ValueOf(DictRes2Inv).MapKeys()
     for _, kres := range keys {
         kinv:=DictRes2Inv[kres.String()]
-        val:=myjson.Reset().From("node."+node).Find(kinv)
-        if val != nil {
+        val:=gjson.Get(myjson,"node."+node+"."+kinv).String()
+        if val != "" {
            d.Set(kres.String(),val)
         } else {
            d.Set(kres.String(),nil)
@@ -655,7 +654,7 @@ func GetStatus(node string) (int,string) {
 
 
 
-func ProvisionNode(node string, param *NetbootParam) (int,string) {
+func ProvisionNode_old(node string, param *NetbootParam) (int,string) {
      err,outstr,errstr:=RunCmd("makedns",node)
      err,outstr,errstr=RunCmd("rinstall",node,"osimage="+param.osimage)
      if err!=nil{
