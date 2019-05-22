@@ -48,7 +48,7 @@ func (s *HttpClient) Request(method string, url string, params *url.Values, head
 
 	req.Header.Set("Accept", "application/json")
 	if token != nil {
-		req.Header.Add("Authorization", "token " + token.(string))
+		req.Header.Add("Authorization", "token "+token.(string))
 	}
 	var resp *http.Response
 	resp, err = s.Do(req)
@@ -61,9 +61,9 @@ func (s *HttpClient) Request(method string, url string, params *url.Values, head
 		if rbody != nil {
 			val := make(map[string]interface{})
 			errjson := json.Unmarshal([]byte(rbody), &val)
-                        if errjson != nil {
-                            return "No message from response", err
-                        }
+			if errjson != nil {
+				return "No message from response", err
+			}
 			return val["message"], err
 		}
 		return nil, err

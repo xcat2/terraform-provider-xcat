@@ -6,20 +6,42 @@ Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) v0.11.13
 
+Build
+-----
+## clone terraform-provider-xcat repo
+
+```sh
+mkdir -p /git/
+cd /git/
+git clone https://github.ibm.com/yangsbj/terraform-provider-xcat
+``` 
+
+## build terraform-provider-xcat 
+
+```sh
+mkdir -p /build
+docker run -v /git/terraform-provider-xcat/:/go/src/github.ibm.com/yangsbj/terraform-provider-xcat -v /build/:/build -it xcat/tfpbuilder:latest
+```
+then you can find the built `terraform-provider-xcat` binary in `/build` directory 
+
+
 Installation
 ------------
 
 ## Download and install Terraform on xCAT MN
 
+Download Terraform binary from https://github.ibm.com/yangsbj/terraform-provider-xcat/releases
+
 ```sh
-$ wget https://media.github.ibm.com/releases/207181/files/158261?token=AABUypPM6uPxEY5_rpIYtJiFjzxopYNWks5c0Tt7wA%3D%3D -O /usr/bin/terraform
+$ wget [Terraform Binary URL] -O /usr/bin/terraform
 $ chmod +x /usr/bin/terraform
 ```
 
 ## Download and install xCAT Terraform Provider on xCAT MN
+Download xCAT Terraform provider binary from https://github.ibm.com/yangsbj/terraform-provider-xcat/releases
 
 ```sh
-$ wget https://media.github.ibm.com/releases/207181/files/158263?token=AABUyukEerLIW1PPyBj1yrwUdVNf1AxFks5c0TwdwA%3D%3D -O ~/.terraform.d/plugins/terraform-provider-xcat
+$ wget [xCAT Terraform Provider URL] -O ~/.terraform.d/plugins/terraform-provider-xcat
 $ chmod +x ~/.terraform.d/plugins/terraform-provider-xcat 
 ```
 
@@ -57,7 +79,7 @@ $ terraform init
 Compose the cluster TF files
 ----------------------------
 
-An example cluster TF files can be found in https://github.ibm.com/yangsbj/terraform-provider-xcat/tree/v0.1/templates/devcluster. Modify the TF files according to your need
+An example cluster TF files can be found in https://github.ibm.com/yangsbj/terraform-provider-xcat/tree/master/templates/devcluster. Modify the TF files according to your need
 
 Refer https://www.terraform.io/docs/configuration/index.html for the Terraform HCL syntax
 

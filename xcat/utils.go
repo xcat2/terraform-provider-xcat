@@ -1,9 +1,9 @@
 package xcat
 
 import (
-    "reflect"
-//    "log"
-//    "strings"
+	"reflect"
+	//    "log"
+	//    "strings"
 )
 
 //check whether string x is in string list a
@@ -17,18 +17,17 @@ func Contains(a []string, x string) bool {
 
 }
 
-
-// get value from netsted 
+// get value from netsted
 func typeof(v interface{}) string {
-    return reflect.TypeOf(v).String()
+	return reflect.TypeOf(v).String()
 }
 
-//convert 
+//convert
 func MapConvInt2Str(data map[string]interface{}) map[string]string {
-     form := make(map[string]string)
+	form := make(map[string]string)
 
-     for k, v := range data {
-         form[k] = v.(string)
-     }
-     return form
+	for k, v := range data {
+		form[k] = v.(string)
+	}
+	return form
 }
