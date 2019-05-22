@@ -19,10 +19,9 @@ git clone https://github.ibm.com/yangsbj/terraform-provider-xcat
 ## build terraform-provider-xcat 
 
 ```sh
-mkdir -p /build
-docker run -v /git/terraform-provider-xcat/:/go/src/github.ibm.com/yangsbj/terraform-provider-xcat -v /build/:/build -it xcat/tfpbuilder:latest
+make
 ```
-then you can find the built `terraform-provider-xcat` binary in `/build` directory 
+then you can find the built `terraform-provider-xcat` binary in `$GOROOT/bin` directory 
 
 
 Installation
