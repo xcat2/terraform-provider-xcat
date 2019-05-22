@@ -1,6 +1,11 @@
 xCAT Terraform Provider
 ==================
 
+[xCAT](http://xcat.org) is an opensource automating deployment, scaling, and management of bare metal servers and virtual machines developed by IBM. It has been widely used in top tier super computers in the world. 
+
+With Terraform, xCAT can provide a self-serving way for the cluster user to apply compute resources, no need to go though xCAT documentation and follow the complex steps to finish jobs like node provision, hardware control, etc.    
+
+
 Requirements
 ------------
 
@@ -13,7 +18,7 @@ Build
 ```sh
 mkdir -p /git/
 cd /git/
-git clone https://github.ibm.com/yangsbj/terraform-provider-xcat
+git clone git@github.com:xcat2/terraform-provider-xcat.git
 ``` 
 
 ## build terraform-provider-xcat 
@@ -29,7 +34,7 @@ Installation
 
 ## Download and install Terraform on xCAT MN
 
-Download Terraform binary from https://github.ibm.com/yangsbj/terraform-provider-xcat/releases
+Download Terraform binary from https://github.com/xcat2/terraform-provider-xcat/releases
 
 ```sh
 $ wget [Terraform Binary URL] -O /usr/bin/terraform
@@ -37,7 +42,7 @@ $ chmod +x /usr/bin/terraform
 ```
 
 ## Download and install xCAT Terraform Provider on xCAT MN
-Download xCAT Terraform provider binary from https://github.ibm.com/yangsbj/terraform-provider-xcat/releases
+Download xCAT Terraform provider binary from https://github.com/xcat2/terraform-provider-xcat/releases
 
 ```sh
 $ wget [xCAT Terraform Provider URL] -O ~/.terraform.d/plugins/terraform-provider-xcat
@@ -78,7 +83,7 @@ $ terraform init
 Compose the cluster TF files
 ----------------------------
 
-An example cluster TF files can be found in https://github.ibm.com/yangsbj/terraform-provider-xcat/tree/master/templates/devcluster. Modify the TF files according to your need
+An example cluster TF files can be found in https://github.com/xcat2/terraform-provider-xcat/tree/master/templates/devcluster. Modify the TF files according to your need
 
 Refer https://www.terraform.io/docs/configuration/index.html for the Terraform HCL syntax
 
