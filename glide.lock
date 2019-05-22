@@ -1,5 +1,5 @@
-hash: f535ba928cce31bce290896ae0507a292e48ea7f373e6a4de7efcc488df6c75b
-updated: 2019-05-22T01:21:45.544121445-04:00
+hash: dccb0aa3156d9d06a05b94dac5198b1a91ae0dec1d8372c91f77c88c832da140
+updated: 2019-05-22T03:10:59.537762293-04:00
 imports:
 - name: cloud.google.com/go
   version: 6cd7f89c14ef26d952dc10b89effd0ca5f33db62
@@ -246,8 +246,6 @@ imports:
   version: 588a75ec4f32903aa5e39a2619ba6a4631e28424
   subpackages:
   - mem
-- name: github.com/thedevsaddam/gojsonq
-  version: 0f9aceb120ad31d57a0f3a3b8a9b07f1cc8ba8fc
 - name: github.com/tidwall/gjson
   version: eee0b6226f0d1db2675a176fdfaa8419bcad4ca8
 - name: github.com/tidwall/match
@@ -264,6 +262,10 @@ imports:
   version: 5467b4fb032b68b160f4acce954153280cf5e05b
   subpackages:
   - codes
+- name: github.com/xcat2/terraform-provider-xcat
+  version: f6527b98d0e5f8e0be29f8ee33a4433d87eb5276
+  subpackages:
+  - xcat
 - name: github.com/zclconf/go-cty
   version: 4fecf87372ec204b46eb9e8ff264cdc3cafdccfe
   subpackages:
@@ -275,10 +277,6 @@ imports:
   - cty/json
   - cty/msgpack
   - cty/set
-- name: github.ibm.com/yangsbj/terraform-provider-xcat
-  version: 727bc0d979648d49f2786769831ed2d2612d0004
-  subpackages:
-  - xcat
 - name: go.opencensus.io
   version: f24e56296b3a742d13b8368bbb1e831f9b0d2c7f
   subpackages:

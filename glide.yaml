@@ -10,7 +10,6 @@ import:
   - terraform
 - package: github.com/tidwall/gjson
   version: v1.2.1
-- package: github.ibm.com/yangsbj/terraform-provider-xcat
-  version: v0.1
+- package: github.com/xcat2/terraform-provider-xcat
   subpackages:
   - xcat
