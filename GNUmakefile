@@ -6,7 +6,7 @@ PKG_NAME=xcat
 default: build
 
 build: fmtcheck
-	go install
+	go install -mod=vendor
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
