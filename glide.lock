@@ -1,5 +1,5 @@
-hash: dccb0aa3156d9d06a05b94dac5198b1a91ae0dec1d8372c91f77c88c832da140
-updated: 2019-05-22T03:10:59.537762293-04:00
+hash: d71a76ad8c8495bc5d5c9f1dcf9d2abc5319a5d083f9f1125877f83205e1f26c
+updated: 2019-05-23T03:17:11.650989709-04:00
 imports:
 - name: cloud.google.com/go
   version: 6cd7f89c14ef26d952dc10b89effd0ca5f33db62
@@ -24,7 +24,7 @@ imports:
 - name: github.com/armon/go-radix
   version: 1a2de0c21c94309923825da3df33a4381872c795
 - name: github.com/aws/aws-sdk-go
-  version: 9663e3b3173f4f48418aa1903451842caddc4f8e
+  version: a0d8dcfc0eb373ebe88dd1dde3a19374af4a8705
   subpackages:
   - aws
   - aws/awserr
@@ -262,10 +262,6 @@ imports:
   version: 5467b4fb032b68b160f4acce954153280cf5e05b
   subpackages:
   - codes
-- name: github.com/xcat2/terraform-provider-xcat
-  version: f6527b98d0e5f8e0be29f8ee33a4433d87eb5276
-  subpackages:
-  - xcat
 - name: github.com/zclconf/go-cty
   version: 4fecf87372ec204b46eb9e8ff264cdc3cafdccfe
   subpackages:
@@ -308,7 +304,7 @@ imports:
   - openpgp/packet
   - openpgp/s2k
 - name: golang.org/x/net
-  version: 018c4d40a106a7ae83689758294fcd8d23850745
+  version: f3200d17e092c607f615320ecaad13d87ad9a2b3
   subpackages:
   - context
   - context/ctxhttp
@@ -365,7 +361,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/genproto
-  version: bb713bdc0e5239f2b68e560efbe1c701a6fe78f9
+  version: c2c4e71fbf6989c3e46a18d65cb88c288f8a3a55
   subpackages:
   - googleapis/api/annotations
   - googleapis/iam/v1
@@ -373,7 +369,7 @@ imports:
   - googleapis/rpc/status
   - googleapis/type/expr
 - name: google.golang.org/grpc
-  version: c2e0a6d772dbf7994b064b8b6c1b8ef91f5d6c09
+  version: 25ad15b871cd0b8d8ff1bf3ed4a043a05eb262af
   subpackages:
   - balancer
   - balancer/base
