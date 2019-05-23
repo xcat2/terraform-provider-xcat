@@ -59,6 +59,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		Url:      d.Get("url").(string),
 		Username: d.Get("username").(string),
 		Password: d.Get("password").(string),
+		Token:    d.Get("token").(string),
 	}
 
 	if err := config.loadAndValidate(); err != nil {
