@@ -20,21 +20,21 @@ func Provider() terraform.ResourceProvider {
 
 			"username": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The username",
 				DefaultFunc: envDefaultFunc("XCAT_USERNAME"),
 			},
 
 			"password": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The password",
 				DefaultFunc: envDefaultFunc("XCAT_PASSWORD"),
 			},
 
 			"token": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The token granted by xcat restapi service for the user",
 				Default:     "",
 			},

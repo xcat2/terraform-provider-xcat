@@ -199,7 +199,6 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 		selectors["name"] = nodename.(string)
 	}
 
-	username := config.Username
 	token := config.Token
 	url := config.Url
 	systemSyncLock.Lock()
@@ -217,7 +216,7 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 
 		_, errcode, errmsg := ProvisionNode(node, url, token, osimage.(string))
 		if errcode != 0 {
-			log.Printf("releasenode %s from %s", node, username)
+			log.Printf("releasenode %s", node)
 			ReleaseNode(node, url, token)
 			out := "Failed to provision node " + node + ":" + errmsg
 			return fmt.Errorf(out)
@@ -274,12 +273,13 @@ func resourceNodeCreate(d *schema.ResourceData, meta interface{}) error {
 		if powered == 0 {
 			ReleaseNode(node, url, token)
 			return fmt.Errorf("node instance %s powered timeout!", node)
+		} else {
+			d.Set("powerstatus", statusstring)
 		}
 	}
 
 	d.SetId(node)
 	d.Set("name", node)
-	d.Set("powerstatus", statusstring)
 	return resourceNodeRead(d, meta)
 }
 
@@ -294,7 +294,12 @@ func resourceNodeRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("Failed to read node resource " + node + " from xcat: " + errmsg)
 	}
 
-	NodeInv2Res(info, d, node)
+	status, errcode, errmsg := ListNodePowerStatus(node, url, token)
+	if errcode != 0 {
+		log.Printf("Failed to read node power status " + node + " from xcat: " + errmsg)
+	}
+
+	NodeInv2Res(info, d, node, status)
 	return nil
 }
 
@@ -372,7 +377,6 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 			return resource.NonRetryableError(fmt.Errorf("instance %s powered!", node))
 		}))
 		if powered == 0 {
-			ReleaseNode(node, url, token)
 			return fmt.Errorf("node instance %s powered timeout!", node)
 		}
 		d.SetPartial("powerstatus")
@@ -385,7 +389,6 @@ func resourceNodeUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceNodeDelete(d *schema.ResourceData, meta interface{}) error {
 
 	config := meta.(*Config)
-	//username:=config.Username
 	url := config.Url
 	token := config.Token
 	node := d.Get("name").(string)
@@ -455,6 +458,7 @@ var DictRes2Inv = map[string]string{
 	"room":        "position_info.room",
 	"height":      "position_info.height",
 	"osimage":     "engines.netboot_engine.engine_info.osimage",
+	"tags":        "obj_info.description",
 }
 
 func Res2DefAttr(resattr string) string {
@@ -464,16 +468,28 @@ func Res2DefAttr(resattr string) string {
 	return resattr
 }
 
-func NodeInv2Res(myjson string, d *schema.ResourceData, node string) int {
+func NodeInv2Res(myjson string, d *schema.ResourceData, node string, status string) int {
 	keys := reflect.ValueOf(DictRes2Inv).MapKeys()
+	tagmatch := regexp.MustCompile(`tags:\[(.*)\]`)
 	for _, kres := range keys {
 		kinv := DictRes2Inv[kres.String()]
 		val := gjson.Get(myjson, "spec."+kinv).String()
 		if val != "" {
-			d.Set(kres.String(), val)
+			if strings.Contains(val, "tags:") {
+				tags := tagmatch.FindStringSubmatch(val)
+				tags_list := strings.Split(tags[1], ",")
+				for _, v := range tags_list {
+					d.Set(v, 1)
+				}
+			} else {
+				d.Set(kres.String(), val)
+			}
 		} else {
 			d.Set(kres.String(), nil)
 		}
+	}
+	if status != "" {
+		d.Set("powerstatus", status)
 	}
 	return 0
 }
