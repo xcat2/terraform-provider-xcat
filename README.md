@@ -34,6 +34,7 @@ make
 ```
 then you can find the built `terraform-provider-xcat` binary in `$GOROOT/bin` directory 
 
+or leverage the xCAT terraform builder docker image on https://cloud.docker.com/u/xcat/repository/docker/xcat/tfpbuilder
 
 Installation
 ------------
