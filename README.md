@@ -21,6 +21,12 @@ cd /git/
 git clone git@github.com:xcat2/terraform-provider-xcat.git
 ``` 
 
+## housekeeping the "vendor" directory
+
+```sh
+glide up --strip-vendor
+```
+
 ## build terraform-provider-xcat 
 
 ```sh
