@@ -26,11 +26,7 @@ func FormatResponse(resp interface{}, err error) (interface{}, int, string) {
 			errorcode = 1
 			errormsg = "Failed to resolve host, please check"
 		}
-		if strings.Contains(errorcode_str, "Can not read the message form response") {
-			errorcode = 1
-			errormsg = errorcode_str
-		}
-		if strings.Contains(errorcode_str, "connection reset by peer") {
+		if errorcode == 0 {
 			errorcode = 1
 			errormsg = errorcode_str
 		}
@@ -54,6 +50,16 @@ func GenerateClient(baseUrl string, timeout time.Duration) *HttpClient {
 			Transport: tr}
 	}
 	return &HttpClient{Client: &httpClient, Headers: http.Header{}}
+}
+
+func CheckTokenValidate(baseUrl string, token interface{}) (string, int, string) {
+	url := baseUrl + "/manager/resmgr"
+	client := GenerateClient(baseUrl, 20)
+	_, errcode, errmsg := FormatResponse(client.Get(url, nil, token, nil, false))
+	if errcode == 0 {
+		return "", 0, ""
+	}
+	return "", errcode, errmsg
 }
 
 func Login(baseUrl string, username string, password string) (string, int, string) {
@@ -85,6 +91,7 @@ func ApplyNodes(baseUrl string, token interface{}, nodeattrs interface{}) (strin
 		for _, value := range ret.(map[string]interface{}) {
 			return value.(string), errcode, errmsg
 		}
+		return "", 1, "No node return from xCAT"
 	}
 	return "", errcode, errmsg
 }
@@ -103,6 +110,22 @@ func ListNodeStatus(node string, baseUrl string, token interface{}) (string, int
 	return status.String(), 0, ""
 }
 
+func ListNodePowerStatus(node string, baseUrl string, token interface{}) (string, int, string) {
+	url := baseUrl + "/system/nodes/" + node + "/power"
+	client := GenerateClient(baseUrl, 10)
+	data := make(map[string]interface{})
+	data["action"] = "state"
+	ret, errcode, errmsg := FormatResponse(client.Post(url, nil, token, data, true))
+	if errcode != 0 {
+		return "", errcode, errmsg
+	}
+	status := gjson.Get(ret.(string), "powerstate")
+	if !status.Exists() {
+		return "", 1, "No status (boot statue) get from xCAT"
+	}
+	return status.String(), 0, ""
+}
+
 func ListNodeDetail(node string, baseUrl string, token interface{}) (string, int, string) {
 	url := baseUrl + "/system/nodes/" + node + "/_detail"
 	client := GenerateClient(baseUrl, 15)
@@ -111,24 +134,24 @@ func ListNodeDetail(node string, baseUrl string, token interface{}) (string, int
 }
 
 func ReleaseNode(node string, baseUrl string, token interface{}) (string, int, string) {
-	url := baseUrl + "/manager/resmgr" + "?name=" + node
-	client := GenerateClient(baseUrl, 10)
+	url := baseUrl + "/manager/resmgr" + "?names=" + node
+	client := GenerateClient(baseUrl, 15)
 	ret, errcode, errmsg := FormatResponse(client.Delete(url, nil, token, nil, true))
 	return ret.(string), errcode, errmsg
 }
 
 func SetPowerStatus(node string, baseUrl string, token interface{}, status string) (string, int, string) {
-	url := baseUrl + "/system/nodes/" + node + "/power" + status
+	url := baseUrl + "/system/nodes/" + node + "/power"
 	client := GenerateClient(baseUrl, 10)
 	data := make(map[string]interface{})
-	data["status"] = status
+	data["action"] = status
 	ret, errcode, errmsg := FormatResponse(client.Post(url, nil, token, data, true))
 	return ret.(string), errcode, errmsg
 }
 
 func ProvisionNode(node string, baseUrl string, token interface{}, osimage string) (string, int, string) {
 	url := baseUrl + "/system/nodes/" + node + "/_operation"
-	client := GenerateClient(baseUrl, 30)
+	client := GenerateClient(baseUrl, 300)
 	tmp_data := make(map[string]string)
 	tmp_data["osimage"] = osimage
 	data := make(map[string]interface{})

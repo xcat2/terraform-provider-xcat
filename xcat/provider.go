@@ -20,21 +20,21 @@ func Provider() terraform.ResourceProvider {
 
 			"username": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The username",
 				DefaultFunc: envDefaultFunc("XCAT_USERNAME"),
 			},
 
 			"password": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The password",
 				DefaultFunc: envDefaultFunc("XCAT_PASSWORD"),
 			},
 
 			"token": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The token granted by xcat restapi service for the user",
 				Default:     "",
 			},
@@ -59,6 +59,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		Url:      d.Get("url").(string),
 		Username: d.Get("username").(string),
 		Password: d.Get("password").(string),
+		Token:    d.Get("token").(string),
 	}
 
 	if err := config.loadAndValidate(); err != nil {
