@@ -1,8 +1,8 @@
 hash: d71a76ad8c8495bc5d5c9f1dcf9d2abc5319a5d083f9f1125877f83205e1f26c
-updated: 2019-05-23T03:17:11.650989709-04:00
+updated: 2019-05-24T05:39:41.192752731-04:00
 imports:
 - name: cloud.google.com/go
-  version: 6cd7f89c14ef26d952dc10b89effd0ca5f33db62
+  version: 913ed651c4eccdddf6bc8a50b5baccb3ea134134
   subpackages:
   - compute/metadata
   - iam
@@ -24,7 +24,7 @@ imports:
 - name: github.com/armon/go-radix
   version: 1a2de0c21c94309923825da3df33a4381872c795
 - name: github.com/aws/aws-sdk-go
-  version: a0d8dcfc0eb373ebe88dd1dde3a19374af4a8705
+  version: 486b92129847298a1f8e4780855b8adab8ca58fe
   subpackages:
   - aws
   - aws/awserr
@@ -213,7 +213,7 @@ imports:
 - name: github.com/jmespath/go-jmespath
   version: c2b33e8439af944379acbdd9c3a5fe0bc44bd8a5
 - name: github.com/mattn/go-colorable
-  version: 3a70a971f94a22f2fa562ffcc7a0eb45f5daf045
+  version: 8029fb3788e5a4a9c00e415f586a6d033f5d38b3
 - name: github.com/mattn/go-isatty
   version: 1311e847b0cb909da63b5fecfb5370aa66236465
 - name: github.com/mitchellh/cli
@@ -315,14 +315,14 @@ imports:
   - internal/timeseries
   - trace
 - name: golang.org/x/oauth2
-  version: 950ef44c6e079baf075030377d90bf0c7e4b7b7a
+  version: aaccbc9213b0974828f81aaac109d194880e3014
   subpackages:
   - google
   - internal
   - jws
   - jwt
 - name: golang.org/x/sys
-  version: 8097e1b27ff5e40620836729a9584e91b094b062
+  version: 0e01d883c5c5e3a1741118a9962f68d71b0a6ed4
   subpackages:
   - unix
 - name: golang.org/x/text
